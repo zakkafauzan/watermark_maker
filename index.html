@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Image Watermarker</title>
+	<style>
+		:root {
+			--bg: #0b0f15;
+			--panel: #121826;
+			--muted: #8fa3b8;
+			--text: #e6edf3;
+			--accent: #4f46e5;
+			--accent-2: #22c55e;
+			--danger: #ef4444;
+		}
+
+		* { box-sizing: border-box; }
+		html, body {
+			margin: 0;
+			padding: 0;
+			background: var(--bg);
+			color: var(--text);
+			font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+		}
+
+		.container {
+			max-width: 1000px;
+			margin: 0 auto;
+			padding: 24px;
+		}
+
+		h1 {
+			font-size: 24px;
+			margin: 0 0 12px 0;
+		}
+
+		.subtitle {
+			color: var(--muted);
+			margin-bottom: 20px;
+		}
+
+		.panel {
+			background: var(--panel);
+			border: 1px solid rgba(255,255,255,0.06);
+			border-radius: 12px;
+			padding: 16px;
+		}
+
+		.dropzone {
+			border: 2px dashed rgba(255,255,255,0.15);
+			border-radius: 12px;
+			padding: 20px;
+			text-align: center;
+			cursor: pointer;
+			transition: border-color 0.15s ease, background 0.15s ease;
+		}
+		.dropzone:hover {
+			border-color: rgba(255,255,255,0.3);
+		}
+		.dropzone.dragover {
+			border-color: var(--accent);
+			background: rgba(79,70,229,0.08);
+		}
+
+		.hidden-input {
+			display: none;
+		}
+
+		.actions {
+			display: flex;
+			gap: 8px;
+			justify-content: center;
+			margin-top: 12px;
+			flex-wrap: wrap;
+		}
+
+		.button {
+			background: var(--accent);
+			color: white;
+			border: 0;
+			border-radius: 10px;
+			padding: 10px 14px;
+			font-weight: 600;
+			cursor: pointer;
+		}
+		.button.secondary {
+			background: transparent;
+			border: 1px solid rgba(255,255,255,0.12);
+			color: var(--text);
+		}
+
+		.meta {
+			margin-top: 10px;
+			color: var(--muted);
+			font-size: 14px;
+		}
+
+		.grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+			gap: 12px;
+			margin-top: 16px;
+		}
+
+		.card {
+			background: #0f1522;
+			border: 1px solid rgba(255,255,255,0.06);
+			border-radius: 10px;
+			overflow: hidden;
+		}
+		.card .thumb {
+			position: relative;
+			width: 100%;
+			height: 120px;
+			background: #0b0f15;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			overflow: hidden;
+		}
+		.card img {
+			max-width: 100%;
+			max-height: 100%;
+			display: block;
+		}
+		.card .info {
+			padding: 8px 10px 10px 10px;
+		}
+		.card .name {
+			font-size: 13px;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+		.card .details {
+			font-size: 12px;
+			color: var(--muted);
+			margin-top: 4px;
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<h1>Upload Images</h1>
+		<div class="subtitle">Select one or many image files. Drag and drop is supported.</div>
+
+		<div class="panel">
+			<label for="file-input" class="dropzone" id="dropzone">
+				<div><strong>Drop images here</strong> or click to choose files</div>
+				<div class="meta" id="hint">PNG, JPG, JPEG, GIF, WebP • Up to your browser limits</div>
+			</label>
+			<input class="hidden-input" id="file-input" type="file" accept="image/*" multiple>
+
+			<div class="actions">
+				<button class="button" id="pick-btn" type="button">Choose Images</button>
+				<button class="button secondary" id="clear-btn" type="button">Clear</button>
+			</div>
+
+			<div class="meta" id="summary">No files selected.</div>
+
+			<div class="grid" id="preview"></div>
+		</div>
+	</div>
+
+	<script>
+		(function() {
+			const input = document.getElementById('file-input');
+			const dropzone = document.getElementById('dropzone');
+			const preview = document.getElementById('preview');
+			const pickBtn = document.getElementById('pick-btn');
+			const clearBtn = document.getElementById('clear-btn');
+			const summary = document.getElementById('summary');
+
+			let filesState = [];
+
+			function formatBytes(bytes) {
+				if (bytes === 0) return '0 B';
+				const k = 1024;
+				const sizes = ['B', 'KB', 'MB', 'GB'];
+				const i = Math.floor(Math.log(bytes) / Math.log(k));
+				return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+			}
+
+			function updateSummary() {
+				if (filesState.length === 0) {
+					summary.textContent = 'No files selected.';
+					return;
+				}
+				const totalBytes = filesState.reduce((acc, f) => acc + f.size, 0);
+				summary.textContent = `${filesState.length} file(s) • ${formatBytes(totalBytes)}`;
+			}
+
+			function clearAll() {
+				filesState = [];
+				preview.innerHTML = '';
+				input.value = '';
+				updateSummary();
+			}
+
+			function isImage(file) {
+				return file && file.type.startsWith('image/');
+			}
+
+			function addFiles(fileList) {
+				const incoming = Array.from(fileList).filter(isImage);
+				if (incoming.length === 0) return;
+				filesState = filesState.concat(incoming);
+				render();
+			}
+
+			function render() {
+				preview.innerHTML = '';
+				filesState.forEach((file, idx) => {
+					const card = document.createElement('div');
+					card.className = 'card';
+
+					const thumb = document.createElement('div');
+					thumb.className = 'thumb';
+					const img = document.createElement('img');
+					img.alt = file.name;
+					img.src = URL.createObjectURL(file);
+					img.onload = () => URL.revokeObjectURL(img.src);
+					thumb.appendChild(img);
+
+					const info = document.createElement('div');
+					info.className = 'info';
+					const name = document.createElement('div');
+					name.className = 'name';
+					name.textContent = file.name;
+					const details = document.createElement('div');
+					details.className = 'details';
+					details.textContent = `${file.type || 'image'} • ${formatBytes(file.size)}`;
+					info.appendChild(name);
+					info.appendChild(details);
+
+					card.appendChild(thumb);
+					card.appendChild(info);
+					preview.appendChild(card);
+				});
+				updateSummary();
+			}
+
+			// Wiring
+			input.addEventListener('change', (e) => {
+				addFiles(e.target.files);
+			});
+
+			pickBtn.addEventListener('click', () => input.click());
+			clearBtn.addEventListener('click', clearAll);
+
+			dropzone.addEventListener('click', () => input.click());
+			dropzone.addEventListener('dragover', (e) => {
+				e.preventDefault();
+				dropzone.classList.add('dragover');
+			});
+			dropzone.addEventListener('dragleave', () => {
+				dropzone.classList.remove('dragover');
+			});
+			dropzone.addEventListener('drop', (e) => {
+				e.preventDefault();
+				dropzone.classList.remove('dragover');
+				if (e.dataTransfer && e.dataTransfer.files) {
+					addFiles(e.dataTransfer.files);
+				}
+			});
+		})();
+	</script>
+</body>
+</html>
