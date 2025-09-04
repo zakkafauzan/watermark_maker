@@ -194,11 +194,19 @@
 			canvas.height = 600;
 			return;
 		}
-		// Fit to container width while preserving aspect ratio
+		// Fit while preserving aspect ratio, constrained by container width and viewport height
 		const container = canvas.parentElement;
-		const targetWidth = container.clientWidth || 1000;
+		const containerWidth = container.clientWidth || 1000;
+		const maxHeight = Math.max(200, Math.floor(window.innerHeight * 0.6));
 		const aspect = imgCache.width / imgCache.height;
-		const targetHeight = Math.round(targetWidth / aspect);
+		// First, assume we can use full container width
+		let targetWidth = containerWidth;
+		let targetHeight = Math.round(targetWidth / aspect);
+		// If that exceeds the max allowed height, shrink by height constraint
+		if (targetHeight > maxHeight) {
+			targetHeight = maxHeight;
+			targetWidth = Math.round(targetHeight * aspect);
+		}
 		canvas.width = targetWidth;
 		canvas.height = targetHeight;
 	}
@@ -217,29 +225,68 @@
 		const textW = Math.ceil(metrics.width);
 		const textH = Math.ceil(sizePx * 1.2);
 
-		// draw single or repeated patterns
-		const gapX = Math.max(0, spacingPx ?? 24);
-		const gapY = gapX;
-		const stepX = repeat === 'y' || repeat === 'none' ? canvas.width + 1 : Math.max(1, textW + gapX);
-		const stepY = repeat === 'x' || repeat === 'none' ? canvas.height + 1 : Math.max(1, textH + gapY);
+		const rad = (rotationDeg * Math.PI) / 180;
+		const cosA = Math.abs(Math.cos(rad));
+		const sinA = Math.abs(Math.sin(rad));
+		// Rotated bounding box for the text rectangle
+		const rotatedW = Math.ceil(textW * cosA + textH * sinA);
+		const rotatedH = Math.ceil(textW * sinA + textH * cosA);
 
-		const startX = stepX === canvas.width + 1 ? canvas.width / 2 : 0;
-		const startY = stepY === canvas.height + 1 ? canvas.height / 2 : 0;
+		const gap = Math.max(0, spacingPx ?? 24);
+		const cellW = Math.max(1, rotatedW + gap);
+		const cellH = Math.max(1, rotatedH + gap);
 
-		for (let y = startY; y <= canvas.height; y += stepY) {
-			for (let x = startX; x <= canvas.width; x += stepX) {
-				context.save();
-				context.translate(x, y);
-				context.rotate((rotationDeg * Math.PI) / 180);
-				if (bgMode === 'color') {
-					context.fillStyle = bgColor;
-					const padX = 8;
-					const padY = 4;
-					context.fillRect(-textW / 2 - padX, -textH / 2 - padY, textW + padX * 2, textH + padY * 2);
-				}
-				context.fillStyle = color;
-				context.fillText(text, 0, 0);
-				context.restore();
+		const targetCanvas = context.canvas;
+		const canvasW = targetCanvas.width;
+		const canvasH = targetCanvas.height;
+
+		// Determine tiling ranges to fully cover canvas with some overdraw
+		const startX = -cellW;
+		const endX = canvasW + cellW;
+		const startY = -cellH;
+		const endY = canvasH + cellH;
+
+		function drawAt(cx, cy) {
+			context.save();
+			context.translate(cx, cy);
+			context.rotate(rad);
+			if (bgMode === 'color') {
+				context.fillStyle = bgColor;
+				const padX = 8;
+				const padY = 4;
+				context.fillRect(-textW / 2 - padX, -textH / 2 - padY, textW + padX * 2, textH + padY * 2);
+			}
+			context.fillStyle = color;
+			context.fillText(text, 0, 0);
+			context.restore();
+		}
+
+		if (repeat === 'none') {
+			drawAt(canvasW / 2, canvasH / 2);
+			context.restore();
+			return;
+		}
+
+		if (repeat === 'x') {
+			for (let x = startX; x <= endX; x += cellW) {
+				drawAt(x, canvasH / 2);
+			}
+			context.restore();
+			return;
+		}
+
+		if (repeat === 'y') {
+			for (let y = startY; y <= endY; y += cellH) {
+				drawAt(canvasW / 2, y);
+			}
+			context.restore();
+			return;
+		}
+
+		// xy repeat
+		for (let y = startY; y <= endY; y += cellH) {
+			for (let x = startX; x <= endX; x += cellW) {
+				drawAt(x, y);
 			}
 		}
 		context.restore();

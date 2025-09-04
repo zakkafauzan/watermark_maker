@@ -207,13 +207,15 @@ h1 {
 /* Big preview */
 .preview-wrapper {
 	margin-top: 16px;
+	text-align: center;
 }
 #big-preview {
-	width: 100%;
+	width: auto;
+	max-width: 100%;
 	height: auto;
 	background: #0b0f15;
 	border: 1px solid rgba(255,255,255,0.06);
 	border-radius: 10px;
-	display: block;
+	display: inline-block;
 	max-height: 60vh;
 }
