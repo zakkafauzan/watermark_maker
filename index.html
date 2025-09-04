@@ -138,6 +138,91 @@
 			color: var(--muted);
 			margin-top: 4px;
 		}
+
+		/* Controls panel */
+		.controls {
+			display: grid;
+			grid-template-columns: 1fr;
+			gap: 12px;
+		}
+		.control-row {
+			display: grid;
+			grid-template-columns: 160px 1fr;
+			align-items: center;
+			gap: 12px;
+		}
+		.control-label {
+			color: var(--muted);
+			font-size: 14px;
+		}
+		.control-input input[type="text"],
+		.control-input input[type="number"],
+		.control-input select {
+			width: 100%;
+			background: #0f1522;
+			border: 1px solid rgba(255,255,255,0.1);
+			border-radius: 8px;
+			padding: 8px 10px;
+			color: var(--text);
+		}
+		.color-inputs {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+		}
+		.color-inputs input[type="color"] {
+			appearance: none;
+			border: none;
+			width: 36px;
+			height: 28px;
+			padding: 0;
+			background: transparent;
+		}
+		.range-row {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+		}
+		.range-row input[type="range"] {
+			width: 100%;
+		}
+		.range-value {
+			min-width: 44px;
+			text-align: right;
+		}
+		.segmented {
+			display: inline-flex;
+			border: 1px solid rgba(255,255,255,0.12);
+			border-radius: 8px;
+			overflow: hidden;
+		}
+		.segmented .option {
+			padding: 6px 10px;
+			cursor: pointer;
+			user-select: none;
+			color: var(--text);
+			background: transparent;
+			border: none;
+		}
+		.segmented .option + .option {
+			border-left: 1px solid rgba(255,255,255,0.12);
+		}
+		.segmented .option.selected {
+			background: var(--accent);
+		}
+
+		/* Big preview */
+		.preview-wrapper {
+			margin-top: 16px;
+		}
+		#big-preview {
+			width: 100%;
+			height: auto;
+			background: #0b0f15;
+			border: 1px solid rgba(255,255,255,0.06);
+			border-radius: 10px;
+			display: block;
+		}
 	</style>
 </head>
 <body>
@@ -160,6 +245,91 @@
 			<div class="meta" id="summary">No files selected.</div>
 
 			<div class="grid" id="preview"></div>
+
+			<div class="panel" style="margin-top: 16px;">
+				<h2 style="margin: 0 0 12px 0; font-size: 18px;">Watermark Settings</h2>
+				<div class="controls" id="wm-controls">
+					<div class="control-row">
+						<div class="control-label">Watermark text</div>
+						<div class="control-input" style="display: grid; grid-template-columns: 1fr 140px 140px; gap: 10px;">
+							<input type="text" id="wm-text" placeholder="Enter watermark text">
+							<select id="wm-font">
+								<option value="system-ui" selected>System UI</option>
+								<option value="Arial">Arial</option>
+								<option value="Georgia">Georgia</option>
+								<option value="Times New Roman">Times New Roman</option>
+								<option value="Courier New">Courier New</option>
+								<option value="Roboto">Roboto</option>
+							</select>
+							<div class="color-inputs">
+								<input type="color" id="wm-color" value="#ffffff" title="Text color">
+								<input type="number" id="wm-size" min="6" max="300" value="32" style="width: 84px;" title="Font size (px)">
+							</div>
+						</div>
+					</div>
+
+					<div class="control-row">
+						<div class="control-label">Opacity</div>
+						<div class="control-input">
+							<div class="range-row">
+								<input type="range" id="wm-opacity" min="0" max="100" value="100">
+								<div class="range-value" id="wm-opacity-value">100%</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="control-row">
+						<div class="control-label">Background</div>
+						<div class="control-input color-inputs">
+							<select id="wm-bg-mode" style="width: 120px; background: #0f1522; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 8px 10px; color: var(--text);">
+								<option value="none" selected>none</option>
+								<option value="color">color</option>
+							</select>
+							<input type="color" id="wm-bg" value="#000000" title="Background color" style="display: none;">
+							<span class="meta">Optional, to improve contrast</span>
+						</div>
+					</div>
+
+					<div class="control-row">
+						<div class="control-label">Repeat</div>
+						<div class="control-input">
+							<div class="segmented" id="wm-repeat">
+								<button type="button" class="option" data-value="x">x-repeat</button>
+								<button type="button" class="option" data-value="y">y-repeat</button>
+								<button type="button" class="option" data-value="xy">xy-repeat</button>
+								<button type="button" class="option selected" data-value="none">no-repeat</button>
+							</div>
+						</div>
+					</div>
+
+					<div class="control-row">
+						<div class="control-label">Repeat spacing</div>
+						<div class="control-input">
+							<div class="color-inputs">
+								<input type="number" id="wm-spacing" min="0" max="1000" value="24" style="width: 100px;" title="Spacing between repeats (px)">
+								<span class="meta">px gap between repeated texts</span>
+							</div>
+						</div>
+					</div>
+
+					<div class="control-row">
+						<div class="control-label">Rotation</div>
+						<div class="control-input">
+							<div class="range-row">
+								<input type="range" id="wm-rotation" min="-360" max="360" value="0">
+								<div class="range-value" id="wm-rotation-value">0°</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="preview-wrapper">
+				<div class="actions" style="justify-content: flex-end; margin-bottom: 8px;">
+					<button class="button" id="export-zip" type="button">Export ZIP</button>
+				</div>
+				<canvas id="big-preview"></canvas>
+			</div>
 		</div>
 	</div>
 
@@ -264,7 +434,317 @@
 					addFiles(e.dataTransfer.files);
 				}
 			});
+
+			// Controls wiring (values stored for future watermarking logic)
+			const wmText = document.getElementById('wm-text');
+			const wmFont = document.getElementById('wm-font');
+			const wmColor = document.getElementById('wm-color');
+			const wmSize = document.getElementById('wm-size');
+			const wmOpacity = document.getElementById('wm-opacity');
+			const wmOpacityValue = document.getElementById('wm-opacity-value');
+			const wmBg = document.getElementById('wm-bg');
+			const wmRepeat = document.getElementById('wm-repeat');
+			const wmSpacing = document.getElementById('wm-spacing');
+			const wmRotation = document.getElementById('wm-rotation');
+			const wmRotationValue = document.getElementById('wm-rotation-value');
+
+			const state = {
+				text: '',
+				fontFamily: 'system-ui',
+				color: '#ffffff',
+				fontSizePx: 32,
+				opacityPct: 100,
+				background: '#000000',
+				repeat: 'none',
+				spacingPx: 24,
+				rotationDeg: 0,
+			};
+
+			function setRepeat(value) {
+				state.repeat = value;
+				Array.from(wmRepeat.querySelectorAll('.option')).forEach(btn => {
+					btn.classList.toggle('selected', btn.dataset.value === value);
+				});
+			}
+
+			wmText.addEventListener('input', (e) => { state.text = e.target.value; });
+			wmFont.addEventListener('change', (e) => { state.fontFamily = e.target.value; });
+			wmColor.addEventListener('input', (e) => { state.color = e.target.value; });
+			wmSize.addEventListener('input', (e) => { state.fontSizePx = Math.max(6, Math.min(300, Number(e.target.value) || 32)); });
+			wmOpacity.addEventListener('input', (e) => {
+				state.opacityPct = Number(e.target.value);
+				wmOpacityValue.textContent = state.opacityPct + '%';
+			});
+			wmBg.addEventListener('input', (e) => { state.background = e.target.value; });
+			wmRepeat.addEventListener('click', (e) => {
+				const target = e.target.closest('.option');
+				if (!target) return;
+				setRepeat(target.dataset.value);
+			});
+			wmSpacing.addEventListener('input', (e) => { state.spacingPx = Math.max(0, Math.min(1000, Number(e.target.value) || 0)); });
+			wmRotation.addEventListener('input', (e) => {
+				state.rotationDeg = Number(e.target.value);
+				wmRotationValue.textContent = state.rotationDeg + '°';
+			});
+
+			// Initialize defaults
+			setRepeat('none');
+			wmOpacityValue.textContent = '100%';
+			wmRotationValue.textContent = '0°';
+
+			// Big preview rendering
+			const canvas = document.getElementById('big-preview');
+			const ctx = canvas.getContext('2d');
+
+			const imgCache = {
+				image: null,
+				url: null,
+				width: 0,
+				height: 0,
+			};
+
+			function loadFirstImageThenRender() {
+				if (filesState.length === 0) {
+					imgCache.image = null;
+					renderBigPreview();
+					return;
+				}
+				const file = filesState[0];
+				if (imgCache.url) URL.revokeObjectURL(imgCache.url);
+				imgCache.url = URL.createObjectURL(file);
+				const image = new Image();
+				image.onload = () => {
+					imgCache.image = image;
+					imgCache.width = image.naturalWidth;
+					imgCache.height = image.naturalHeight;
+					renderBigPreview();
+				};
+				image.src = imgCache.url;
+			}
+
+			function fitCanvasToImage() {
+				if (!imgCache.image) {
+					// Empty canvas to a pleasant aspect
+					canvas.width = 1000;
+					canvas.height = 600;
+					return;
+				}
+				// Fit to container width while preserving aspect ratio
+				const container = canvas.parentElement;
+				const targetWidth = container.clientWidth || 1000;
+				const aspect = imgCache.width / imgCache.height;
+				const targetHeight = Math.round(targetWidth / aspect);
+				canvas.width = targetWidth;
+				canvas.height = targetHeight;
+			}
+
+			function drawTiledText(ctx, text, options) {
+				const { repeat, rotationDeg, font, color, sizePx, opacity, bgMode, bgColor, spacingPx } = options;
+				if (!text) return;
+				ctx.save();
+				ctx.globalAlpha = opacity;
+				ctx.fillStyle = color;
+				ctx.textBaseline = 'middle';
+				ctx.textAlign = 'center';
+				ctx.font = `${sizePx}px ${font}`;
+
+				const metrics = ctx.measureText(text);
+				const textW = Math.ceil(metrics.width);
+				const textH = Math.ceil(sizePx * 1.2);
+
+				// draw single or repeated patterns
+				const gapX = Math.max(0, spacingPx ?? 24);
+				const gapY = gapX;
+				const stepX = repeat === 'y' || repeat === 'none' ? canvas.width + 1 : Math.max(1, textW + gapX);
+				const stepY = repeat === 'x' || repeat === 'none' ? canvas.height + 1 : Math.max(1, textH + gapY);
+
+				const startX = stepX === canvas.width + 1 ? canvas.width / 2 : 0;
+				const startY = stepY === canvas.height + 1 ? canvas.height / 2 : 0;
+
+				for (let y = startY; y <= canvas.height; y += stepY) {
+					for (let x = startX; x <= canvas.width; x += stepX) {
+						ctx.save();
+						ctx.translate(x, y);
+						ctx.rotate((rotationDeg * Math.PI) / 180);
+						if (bgMode === 'color') {
+							ctx.fillStyle = bgColor;
+							const padX = 8;
+							const padY = 4;
+							ctx.fillRect(-textW / 2 - padX, -textH / 2 - padY, textW + padX * 2, textH + padY * 2);
+						}
+						ctx.fillStyle = color;
+						ctx.fillText(text, 0, 0);
+						ctx.restore();
+					}
+				}
+				ctx.restore();
+			}
+
+			function drawImageWithWatermarkToCanvas(canvasTarget, image, options) {
+				const context = canvasTarget.getContext('2d');
+				const aspect = image.naturalWidth / image.naturalHeight;
+				const width = canvasTarget.width;
+				const height = canvasTarget.height;
+				context.clearRect(0, 0, width, height);
+				context.drawImage(image, 0, 0, image.naturalWidth, image.naturalHeight, 0, 0, width, height);
+				drawTiledText(context, options.text, {
+					repeat: options.repeat,
+					rotationDeg: options.rotationDeg,
+					font: options.font,
+					color: options.color,
+					sizePx: options.sizePx,
+					opacity: options.opacity,
+					bgMode: options.bgMode,
+					bgColor: options.bgColor,
+					spacingPx: options.spacingPx,
+				});
+
+				return canvasTarget;
+			}
+
+			function renderBigPreview() {
+				fitCanvasToImage();
+				ctx.clearRect(0, 0, canvas.width, canvas.height);
+				if (imgCache.image) {
+					// draw scaled image to canvas size
+					ctx.drawImage(imgCache.image, 0, 0, imgCache.width, imgCache.height, 0, 0, canvas.width, canvas.height);
+				}
+				// draw watermark
+				drawTiledText(ctx, state.text, {
+					repeat: state.repeat,
+					rotationDeg: state.rotationDeg,
+					font: state.fontFamily,
+					color: state.color,
+					sizePx: state.fontSizePx,
+					opacity: Math.max(0, Math.min(1, state.opacityPct / 100)),
+					bgMode: state.backgroundMode || 'none',
+					bgColor: state.background || '#000000',
+					spacingPx: state.spacingPx,
+				});
+			}
+
+			async function exportAllAsZip() {
+				if (filesState.length === 0) return;
+				const zip = new JSZip();
+				const folder = zip.folder('watermarked');
+				for (const file of filesState) {
+					if (!isImage(file)) continue;
+					const url = URL.createObjectURL(file);
+					const img = await new Promise((resolve, reject) => {
+						const im = new Image();
+						im.onload = () => resolve(im);
+						im.onerror = reject;
+						im.src = url;
+					});
+					URL.revokeObjectURL(url);
+
+					// Prepare offscreen canvas matching preview width but preserving aspect
+					const off = document.createElement('canvas');
+					const containerWidth = canvas.parentElement.clientWidth || img.naturalWidth;
+					off.width = containerWidth;
+					off.height = Math.round(containerWidth * (img.naturalHeight / img.naturalWidth));
+
+					drawImageWithWatermarkToCanvas(off, img, {
+						text: state.text,
+						repeat: state.repeat,
+						rotationDeg: state.rotationDeg,
+						font: state.fontFamily,
+						color: state.color,
+						sizePx: state.fontSizePx,
+						opacity: Math.max(0, Math.min(1, state.opacityPct / 100)),
+						bgMode: state.backgroundMode || 'none',
+						bgColor: state.background || '#000000',
+						spacingPx: state.spacingPx,
+					});
+
+					const blob = await new Promise(resolve => off.toBlob(resolve, 'image/png'));
+					folder.file((file.name.replace(/\.[^.]+$/, '') || 'image') + '.png', blob);
+				}
+
+				const zipBlob = await zip.generateAsync({ type: 'blob' });
+				const suggestedName = 'watermarked_images.zip';
+
+				// If the browser supports the File System Access API, prompt for location
+				if (window.showSaveFilePicker) {
+					try {
+						const handle = await window.showSaveFilePicker({
+							suggestedName,
+							types: [{ description: 'ZIP files', accept: { 'application/zip': ['.zip'] } }]
+						});
+						const writable = await handle.createWritable();
+						await writable.write(zipBlob);
+						await writable.close();
+						return;
+					} catch (e) {
+						// Fallback to download
+					}
+				}
+
+				const a = document.createElement('a');
+				const dlUrl = URL.createObjectURL(zipBlob);
+				a.href = dlUrl;
+				a.download = suggestedName;
+				document.body.appendChild(a);
+				a.click();
+				document.body.removeChild(a);
+				URL.revokeObjectURL(dlUrl);
+			}
+
+			document.getElementById('export-zip').addEventListener('click', exportAllAsZip);
+
+			// React to controls and file changes
+			const rerender = () => renderBigPreview();
+			['input', 'change'].forEach(evt => {
+				wmText.addEventListener(evt, rerender);
+				wmFont.addEventListener(evt, rerender);
+				wmColor.addEventListener(evt, rerender);
+				wmSize.addEventListener(evt, rerender);
+				wmOpacity.addEventListener(evt, rerender);
+				wmBg.addEventListener(evt, rerender);
+				wmSpacing.addEventListener(evt, rerender);
+				wmRotation.addEventListener(evt, rerender);
+			});
+			wmRepeat.addEventListener('click', rerender);
+
+			// Background mode toggle
+			const wmBgMode = document.getElementById('wm-bg-mode');
+			wmBgMode.addEventListener('change', () => {
+				state.backgroundMode = wmBgMode.value;
+				wmBg.style.display = wmBgMode.value === 'color' ? '' : 'none';
+				rerender();
+			});
+			// initialize background mode
+			state.backgroundMode = 'none';
+			wmBg.style.display = 'none';
+
+			// Override state setters to also trigger rerender
+			wmText.addEventListener('input', () => { rerender(); });
+			wmFont.addEventListener('change', () => { rerender(); });
+			wmColor.addEventListener('input', () => { rerender(); });
+			wmSize.addEventListener('input', () => { rerender(); });
+			wmOpacity.addEventListener('input', () => { rerender(); });
+			wmRotation.addEventListener('input', () => { rerender(); });
+			wmRepeat.addEventListener('click', () => { rerender(); });
+
+			// Re-render on size changes
+			window.addEventListener('resize', renderBigPreview);
+
+			// Re-render whenever files list changes
+			const originalAddFiles = addFiles;
+			addFiles = function(fileList) {
+				originalAddFiles(fileList);
+				loadFirstImageThenRender();
+			};
+			const originalClearAll = clearAll;
+			clearAll = function() {
+				originalClearAll();
+				loadFirstImageThenRender();
+			};
+
+			// First render
+			loadFirstImageThenRender();
 		})();
 	</script>
+	<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 </body>
 </html>
