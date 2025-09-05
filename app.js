@@ -401,7 +401,76 @@
 		URL.revokeObjectURL(dlUrl);
 	}
 
+	async function exportAllAsPng() {
+		if (filesState.length === 0) return;
+		
+		for (const file of filesState) {
+			if (!isImage(file)) continue;
+			
+			const url = URL.createObjectURL(file);
+			const img = await new Promise((resolve, reject) => {
+				const im = new Image();
+				im.onload = () => resolve(im);
+				im.onerror = reject;
+				im.src = url;
+			});
+			URL.revokeObjectURL(url);
+
+			// Prepare offscreen canvas matching preview width but preserving aspect
+			const off = document.createElement('canvas');
+			const containerWidth = canvas.parentElement.clientWidth || img.naturalWidth;
+			off.width = containerWidth;
+			off.height = Math.round(containerWidth * (img.naturalHeight / img.naturalWidth));
+
+			drawImageWithWatermarkToCanvas(off, img, {
+				text: state.text,
+				repeat: state.repeat,
+				rotationDeg: state.rotationDeg,
+				font: state.fontFamily,
+				color: state.color,
+				sizePx: state.fontSizePx,
+				opacity: Math.max(0, Math.min(1, state.opacityPct / 100)),
+				bgMode: state.backgroundMode || 'none',
+				bgColor: state.background || '#000000',
+				spacingPx: state.spacingPx,
+			});
+
+			const blob = await new Promise(resolve => off.toBlob(resolve, 'image/png'));
+			
+			// Generate filename: <original-file-name>+watermarked.png
+			const originalName = file.name.replace(/\.[^.]+$/, '') || 'image';
+			const filename = `${originalName}+watermarked.png`;
+
+			// If the browser supports the File System Access API, prompt for location
+			if (window.showSaveFilePicker) {
+				try {
+					const handle = await window.showSaveFilePicker({
+						suggestedName: filename,
+						types: [{ description: 'PNG files', accept: { 'image/png': ['.png'] } }]
+					});
+					const writable = await handle.createWritable();
+					await writable.write(blob);
+					await writable.close();
+					continue;
+				} catch (e) {
+					// Fallback to download
+				}
+			}
+
+			// Fallback to download
+			const a = document.createElement('a');
+			const dlUrl = URL.createObjectURL(blob);
+			a.href = dlUrl;
+			a.download = filename;
+			document.body.appendChild(a);
+			a.click();
+			document.body.removeChild(a);
+			URL.revokeObjectURL(dlUrl);
+		}
+	}
+
 	document.getElementById('export-zip').addEventListener('click', exportAllAsZip);
+	document.getElementById('export-png').addEventListener('click', exportAllAsPng);
 
 	// React to controls and file changes
 	const rerender = () => renderBigPreview();
